@@ -2,13 +2,17 @@ package cristian.proyecto.com.googlemaps;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Dialog;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
+import android.view.View;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -17,6 +21,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
@@ -27,7 +32,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private static final int REQUEST_CODE = 11;
     private GoogleMap mMap;
     private LocationManager manager;
-    private Location locationUser;
+    private MarkerOptions concurrentMarker;
+    private boolean first;
+    private FloatingActionButton addMarker;
 
 
     @Override
@@ -39,6 +46,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
         manager = (LocationManager) getSystemService(LOCATION_SERVICE);
+
+        addMarker = findViewById(R.id.open_dialog);
+        addMarker.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Dialogo dialog = new Dialogo();
+                //dialog.show(getFragmentManager(),"");
+            }
+        });
+
     }
 
 
@@ -62,33 +79,35 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 Manifest.permission.ACCESS_COARSE_LOCATION
         }, REQUEST_CODE);
 
-
-
+        mMap.setMyLocationEnabled(true);
+        mMap.setOnMyLocationButtonClickListener(this);
+        mMap.setOnMyLocationClickListener(this);
 
         manager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 1000, 1, new LocationListener() {
-
-
             @Override
             public void onLocationChanged(Location location) {
-                locationUser = location;
                 LatLng posicion = new LatLng(location.getLatitude(), location.getLongitude());
-                mMap.addMarker(new MarkerOptions().position(posicion).title("Marker"));
-                mMap.moveCamera(CameraUpdateFactory.newLatLng(posicion));
+                if (first == false) {
+                    concurrentMarker = new MarkerOptions().icon(BitmapDescriptorFactory.fromResource(R.drawable.icon)).position(posicion).title("I");
+                    mMap.addMarker(concurrentMarker);
+                    mMap.moveCamera(CameraUpdateFactory.newLatLng(posicion));
+                    first = true;
+                } else {
+                    concurrentMarker.position(posicion);
+                    mMap.moveCamera(CameraUpdateFactory.newLatLng(posicion));
+                }
             }
 
             @Override
             public void onStatusChanged(String provider, int status, Bundle extras) {
-
             }
 
             @Override
             public void onProviderEnabled(String provider) {
-
             }
 
             @Override
             public void onProviderDisabled(String provider) {
-
             }
         });
     }
@@ -96,14 +115,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMyLocationClick(Location location) {
         Toast.makeText(this, "Current location:\n" + location, Toast.LENGTH_LONG).show();
-        // Add a marker in Sydney and move the camera
     }
 
     @Override
     public boolean onMyLocationButtonClick() {
         Toast.makeText(this, "MyLocation button clicked", Toast.LENGTH_SHORT).show();
-        // Return false so that we don't consume the event and the default behavior still occurs
-        // (the camera animates to the user's current position).
         return false;
     }
 
