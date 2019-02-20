@@ -16,42 +16,23 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Your Custom Dialog Heading"
+            android:text="Add Marker!!"
             android:textSize="18sp"
             android:textColor="#000"
             android:id="@+id/heading"/>
 
-        <EditText
+        <AutoCompleteTextView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:layout_below="@id/heading"
-            android:layout_marginTop="20dp"
-            android:background="@null"
+            android:layout_centerVertical="true"
+            android:textSize="15sp"
             android:textColor="#000"
-            android:hint="enter some text..."
-            android:id="@+id/input"/>
+            android:id="@+id/input_search"
+            android:background="@null"
+            android:hint="Enter Address, City or Zip Code"
+            android:imeOptions="actionSearch"/>
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="OK"
-            android:layout_alignParentBottom="true"
-            android:layout_alignParentRight="true"
-            android:layout_marginRight="20dp"
-            android:textSize="18sp"
-            android:textColor="#33bbff"
-            android:id="@+id/action_ok"/>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="CANCEL"
-            android:layout_alignParentBottom="true"
-            android:layout_alignParentLeft="true"
-            android:layout_marginRight="20dp"
-            android:textSize="18sp"
-            android:textColor="#33bbff"
-            android:id="@+id/action_cancel"/>
     </RelativeLayout>
 
 </RelativeLayout>

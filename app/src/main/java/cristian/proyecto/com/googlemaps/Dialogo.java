@@ -4,22 +4,14 @@ import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.DialogFragment;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.TextView;
 
+
 public class Dialogo extends DialogFragment {
-
-    private static final String TAG = "Dialogo";
-
-    public interface OnInputListener{
-        void sendInput(String input);
-    }
-
-    public OnInputListener mOnInputListener;
 
     //widgets
     private EditText mInput;
@@ -32,50 +24,57 @@ public class Dialogo extends DialogFragment {
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.dialog_add, container, false);
-        mActionCancel = view.findViewById(R.id.action_cancel);
-        mActionOk = view.findViewById(R.id.action_ok);
-        mInput = view.findViewById(R.id.input);
 
-        mActionCancel.setOnClickListener(new View.OnClickListener() {
+        //mActionCancel = view.findViewById(R.id.action_cancel);
+        //mActionOk = view.findViewById(R.id.action_ok);
+
+        // --------------------------------------------------------------
+        // -------------------CANCEL OPTION -----------------------------
+        // --------------------------------------------------------------
+
+        /*mActionCancel.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.d(TAG, "onClick: closing dialog");
-                getDialog().dismiss();
+
             }
-        });
+        });*/
 
 
-        mActionOk.setOnClickListener(new View.OnClickListener() {
+        // --------------------------------------------------------------
+        // ---------------------- OK OPTION -----------------------------
+        // --------------------------------------------------------------
+
+       /* mActionOk.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.d(TAG, "onClick: capturing input");
 
-                String input = mInput.getText().toString();
-//                if(!input.equals("")){
-//
-//                    //Easiest way: just set the value
-//                    ((MainActivity)getActivity()).mInputDisplay.setText(input);
-//
-//                }
-
-                //"Best Practice" but it takes longer
-                mOnInputListener.sendInput(input);
-                getDialog().dismiss();
             }
-        });
-
+        });*/
         return view;
     }
+
+    /**
+     * Create a new instance of MyDialogFragment, providing "num"
+     * as an argument.
+     */
+    static Dialogo newInstance(int num) {
+        Dialogo f = new Dialogo();
+        // Supply num input as an argument.
+        Bundle args = new Bundle();
+        args.putInt("num", num);
+        f.setArguments(args);
+        return f;
+    }
+
 
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
         try{
-            mOnInputListener = (OnInputListener) getActivity();
         }catch (ClassCastException e){
-            Log.e(TAG, "onAttach: ClassCastException: " + e.getMessage() );
         }
     }
+
 
 
 }
