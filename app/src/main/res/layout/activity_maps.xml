@@ -39,17 +39,27 @@
             android:layout_marginLeft="10dp"
             android:src="@drawable/ic_magnify"/>
 
-        <AutoCompleteTextView
+
+        <android.support.v7.widget.RecyclerView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_toRightOf="@+id/ic_magnify"
-            android:layout_centerVertical="true"
-            android:textSize="15sp"
-            android:textColor="#000"
-            android:id="@+id/search"
-            android:background="@null"
-            android:hint="Enter Address, City or Zip Code"
-            android:imeOptions="actionSearch"/>
+            android:id="@+id/libreta">
+
+            <fragment android:id="@+id/autocomplete_fragment"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="15sp"
+                android:textColor="#000"
+                android:hint="Enter Address, City or Zip Code"
+                android:layout_toRightOf="@+id/ic_magnify"
+                android:name="com.google.android.libraries.places.widget.AutocompleteSupportFragment"
+                />
+
+        </android.support.v7.widget.RecyclerView>
+
+
+
+
 
 
     </RelativeLayout>
