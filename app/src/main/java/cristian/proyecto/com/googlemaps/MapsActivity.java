@@ -251,6 +251,18 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private String lugarCercano(){
+        LatLng posicion0 = new LatLng(-53.2255, 4.395);
+        MarkerOptions mk_1 = new MarkerOptions().position(posicion0);
+        LatLng posicion1 = new LatLng(-53.2255, 4.395);
+        MarkerOptions mk_2 = new MarkerOptions().position(posicion1);
+        LatLng posicion2 = new LatLng(-53.2255, 4.395);
+        MarkerOptions mk_3 = new MarkerOptions().position(posicion2);
+        LatLng posicion3 = new LatLng(-53.2255, 4.395);
+        MarkerOptions mk_4 = new MarkerOptions().position(posicion3);
+        lista_Markres.add(mk_1);
+        lista_Markres.add(mk_2);
+        lista_Markres.add(mk_3);
+        lista_Markres.add(mk_4);
         String lugar = "";
         for (MarkerOptions marker: lista_Markres) {
             lugar = marker.getTitle();
