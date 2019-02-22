@@ -14,8 +14,12 @@ import android.widget.TextView;
 public class Dialogo extends DialogFragment {
 
     //widgets
+    public String lugarCercano;
     private EditText mInput;
     private TextView mActionOk, mActionCancel;
+
+    public Dialogo() {
+    }
 
 
     //vars
@@ -24,32 +28,8 @@ public class Dialogo extends DialogFragment {
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.dialog_add, container, false);
-
-        //mActionCancel = view.findViewById(R.id.action_cancel);
-        //mActionOk = view.findViewById(R.id.action_ok);
-
-        // --------------------------------------------------------------
-        // -------------------CANCEL OPTION -----------------------------
-        // --------------------------------------------------------------
-
-        /*mActionCancel.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-            }
-        });*/
-
-
-        // --------------------------------------------------------------
-        // ---------------------- OK OPTION -----------------------------
-        // --------------------------------------------------------------
-
-       /* mActionOk.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-            }
-        });*/
+        TextView textView = view.findViewById(R.id.text);
+        textView.setText(lugarCercano);
         return view;
     }
 

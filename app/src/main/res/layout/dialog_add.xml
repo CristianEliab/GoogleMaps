@@ -3,35 +3,35 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".MapsActivity"
-    >
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_gravity="bottom"
+    tools:context=".MapsActivity">
 
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="200dp"
+        android:layout_height="100dp"
+        android:background="#3D84F8"
         android:padding="10dp">
 
         <TextView
+            android:id="@+id/heading"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:gravity="center"
             android:text="Add Marker!!"
-            android:textSize="18sp"
             android:textColor="#000"
-            android:id="@+id/heading"/>
+            android:textSize="18sp" />
 
-        <AutoCompleteTextView
+        <TextView
+            android:id="@+id/text"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_below="@id/heading"
-            android:layout_centerVertical="true"
-            android:textSize="15sp"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/heading"
+            android:gravity="center"
+            android:hint="Descripción"
             android:textColor="#000"
-            android:id="@+id/input_search"
-            android:background="@null"
-            android:hint="Enter Address, City or Zip Code"
-            android:imeOptions="actionSearch"/>
+            android:textSize="15sp" />
 
     </RelativeLayout>
 

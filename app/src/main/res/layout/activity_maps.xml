@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout android:layout_height="match_parent"
-    android:layout_width="match_parent"
+    android:layout_width="match_parent" xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:android="http://schemas.android.com/apk/res/android">
 
     <fragment xmlns:android="http://schemas.android.com/apk/res/android"
@@ -12,10 +12,9 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         tools:context=".MapsActivity">
-
     </fragment>
 
-    <RelativeLayout xmlns:app="http://schemas.android.com/apk/res-auto"
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="50dp"
         android:layout_marginTop="60dp"
@@ -39,41 +38,30 @@
             android:layout_marginTop="5dp"
             app:cardCornerRadius="4dp">
             <fragment
-                android:id="@+id/place_autocomplete_fragment"
-                android:name="com.google.android.gms.location.places.ui.PlaceAutocompleteFragment"
+                android:id="@+id/autocomplete_fragment"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:name="com.google.android.libraries.places.widget.AutocompleteSupportFragment" />
         </android.support.v7.widget.CardView>
-
-
-        <fragment android:id="@+id/autocomplete_fragment"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:completionThreshold="1"
-            android:textSize="15sp"
-            android:textColor="#000"
-            android:hint="Enter Address, City or Zip Code"
-            android:name="com.google.android.libraries.places.widget.AutocompleteSupportFragment" />
 
         <ImageView
             android:layout_width="40dp"
             android:layout_height="40dp"
-            android:layout_below="@+id/autocomplete_fragment"
+            android:layout_below="@+id/toolbar"
             android:layout_marginLeft="10dp"
             android:layout_marginTop="150dp"
             android:src="@mipmap/ic_info"
             android:scaleType="centerCrop"
             android:id="@+id/place_info" />
 
-        <android.support.design.widget.FloatingActionButton
-            android:id="@+id/open_dialog"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_below="@+id/place_info"
-            app:srcCompat="@android:drawable/ic_input_add" />
-
     </RelativeLayout>
 
-
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/open_dialog"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:foregroundGravity="center|right"
+        android:layout_below="@+id/map"
+        app:srcCompat="@android:drawable/ic_input_add" />
 
 </RelativeLayout>
