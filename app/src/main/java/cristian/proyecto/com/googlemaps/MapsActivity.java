@@ -8,19 +8,22 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -31,24 +34,19 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.libraries.places.api.Places;
 import com.google.android.libraries.places.api.model.Place;
-import com.google.android.libraries.places.api.model.PlaceLikelihood;
-import com.google.android.libraries.places.api.net.FindCurrentPlaceRequest;
-import com.google.android.libraries.places.api.net.FindCurrentPlaceResponse;
-import com.google.android.libraries.places.api.net.PlacesClient;
 import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
 import com.google.android.libraries.places.widget.listener.PlaceSelectionListener;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
+import java.util.zip.Inflater;
 
 
 public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnMyLocationButtonClickListener,
-        GoogleMap.OnMyLocationClickListener, View.OnClickListener, GoogleApiClient.OnConnectionFailedListener {
+        GoogleMap.OnMyLocationClickListener, GoogleApiClient.OnConnectionFailedListener, GoogleMap.OnMapClickListener, NoticeDialogFragment.NoticeDialogListener{
 
 
     private static final String FINE_LOCATION = Manifest.permission.ACCESS_FINE_LOCATION;
@@ -60,12 +58,14 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private LocationManager manager;
     private MarkerOptions concurrentMarker;
     private boolean first;
-    private FloatingActionButton addMarker;
-
-    private static final float DEFAULT_ZOOM = 15f;
-    private Marker mMarker;
+    private ImageView imagen_info;
     private Boolean mLocationPermissionsGranted = false;
     private ArrayList<MarkerOptions> lista_Markres;
+    private ImageView agregar_Marcador;
+    private RelativeLayout buscador;
+    private LatLng posicionNewMarker;
+    private static final float DEFAULT_ZOOM = 15;
+    public EditText nombreLugar;
 
 
     @Override
@@ -76,11 +76,35 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         setSupportActionBar(tb);
         tb.setSubtitle("Auto Complete");
         manager = (LocationManager) getSystemService(LOCATION_SERVICE);
-        addMarker = findViewById(R.id.open_dialog);
-        addMarker.setOnClickListener(this);
-
         lista_Markres = new ArrayList<MarkerOptions>();
         getLocationPermission();
+        activarInfo();
+        agregar_Marcador_Opcion2();
+    }
+
+    private void agregar_Marcador_Opcion2() {
+        agregar_Marcador = findViewById(R.id.add_marker);
+        buscador = findViewById(R.id.relLayout1);
+        agregar_Marcador.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                buscador.setVisibility(View.VISIBLE);
+
+            }
+        });
+    }
+
+    private void activarInfo() {
+        imagen_info = findViewById(R.id.place_info);
+        imagen_info.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String lugar = lugarCercano();
+                DialogFragment dialog = new Dialogo();
+                ((Dialogo) dialog).lugarCercano = lugar;
+                dialog.show(getSupportFragmentManager(), "MyCustomDialog");
+            }
+        });
     }
 
     /**
@@ -144,7 +168,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             Places.initialize(getApplicationContext(), API_KEY);
         }
 
-
         AutocompleteSupportFragment autocompleteFragment = (AutocompleteSupportFragment)
                 getSupportFragmentManager().findFragmentById(R.id.autocomplete_fragment);
 
@@ -153,7 +176,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             @Override
             public void onPlaceSelected(Place place) {
                 Log.i(TAG, "Place: " + place.getName() + ", " + place.getId());
-                agregarMarcador();
+                agregarMarcador(place);
             }
 
             @Override
@@ -165,8 +188,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
 
-    private void agregarMarcador() {
-
+    private void agregarMarcador(Place place) {
+        MarkerOptions newMarKer = new MarkerOptions();
+        LatLng posicion = place.getLatLng();
+        newMarKer.position(posicion).title(place.getName());
+        mMap.addMarker(newMarKer);
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(posicion));
     }
 
     /**
@@ -183,6 +210,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
 
+        mMap.setOnMapClickListener(this);
         mMap.setMyLocationEnabled(true);
         mMap.setOnMyLocationButtonClickListener(this);
         mMap.setOnMyLocationClickListener(this);
@@ -199,10 +227,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 } else {
                     concurrentMarker.position(posicion);
                     mMap.moveCamera(CameraUpdateFactory.newLatLng(posicion));
-                    String lugar = lugarCercano();
-                    DialogFragment dialog = new Dialogo();
-                    ((Dialogo) dialog).lugarCercano = lugar;
-                    dialog.show(getSupportFragmentManager(), "MyCustomDialog");
                 }
             }
 
@@ -251,26 +275,16 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private String lugarCercano(){
-        LatLng posicion0 = new LatLng(-53.2255, 4.395);
-        MarkerOptions mk_1 = new MarkerOptions().position(posicion0);
-        LatLng posicion1 = new LatLng(-53.2255, 4.395);
-        MarkerOptions mk_2 = new MarkerOptions().position(posicion1);
-        LatLng posicion2 = new LatLng(-53.2255, 4.395);
-        MarkerOptions mk_3 = new MarkerOptions().position(posicion2);
-        LatLng posicion3 = new LatLng(-53.2255, 4.395);
-        MarkerOptions mk_4 = new MarkerOptions().position(posicion3);
-        lista_Markres.add(mk_1);
-        lista_Markres.add(mk_2);
-        lista_Markres.add(mk_3);
-        lista_Markres.add(mk_4);
-        String lugar = "";
+        DecimalFormat format = new DecimalFormat();
         for (MarkerOptions marker: lista_Markres) {
             lugar = marker.getTitle();
             LatLng posicion = marker.getPosition();
             LatLng concurret = concurrentMarker.getPosition();
+            format.setMaximumFractionDigits(2);
             masCercano(posicion.latitude, posicion.longitude,  concurret.latitude, concurret.longitude);
         }
-        return lugar + "- ditancia: " + this.distancia;
+        String conversion = format.format(this.distancia);
+        return "El lugar más cercano es \n" + lugar + " a una ditancia de: \n" + conversion;
     }
 
     /**
@@ -278,7 +292,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
      */
     @Override
     public void onMyLocationClick(Location location) {
-        Toast.makeText(this, "Current location:\n" + location, Toast.LENGTH_LONG).show();
+        Toast.makeText(this, "Usted se encuentra en :\n", Toast.LENGTH_LONG).show();
     }
 
 
@@ -299,14 +313,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     }
 
-    /**
-     *
-     */
-    @Override
-    public void onClick(View v) {
-        DialogFragment dialog = new Dialogo();
-        dialog.show(getSupportFragmentManager(), "MyCustomDialog");
-    }
 
     /**
      *
@@ -315,33 +321,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         this.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
     }
 
-   /* *//**
-     * Callback invoked when PlaceAutocompleteFragment encounters an error.
-     *//*
-    private void moveCamera(LatLng latLng, float zoom, PlaceInfo placeInfo){
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
-        mMap.clear();
-        mMap.setInfoWindowAdapter(new CustomInfoWindowAdapter(this));
-        if(placeInfo != null){
-            try{
-                String snippet = "Address: " + placeInfo.getAddress() + "\n" +
-                        "Phone Number: " + placeInfo.getPhoneNumber() + "\n" +
-                        "Website: " + placeInfo.getWebsiteUri() + "\n" +
-                        "Price Rating: " + placeInfo.getRating() + "\n";
-                MarkerOptions options = new MarkerOptions()
-                        .position(latLng)
-                        .title(placeInfo.getName())
-                        .snippet(snippet);
-                mMarker = mMap.addMarker(options);
-            }catch (NullPointerException e){
-            }
-        }else{
-            mMap.addMarker(new MarkerOptions().position(latLng));
-        }
 
-        hideSoftKeyboard();
-    }
-*/
     /**
      *
      */
@@ -363,4 +343,38 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
 
     }
+
+    @Override
+    public void onMapClick(LatLng latLng) {
+        showNoticeDialog();
+        posicionNewMarker = latLng;
+    }
+
+    public void showNoticeDialog() {
+        // Create an instance of the dialog fragment and show it
+        DialogFragment dialog = new NoticeDialogFragment();
+        dialog.show(getSupportFragmentManager(), "NoticeDialogFragment");
+    }
+
+    // The dialog fragment receives a reference to this Activity through the
+    // Fragment.onAttach() callback, which it uses to call the following methods
+    // defined by the NoticeDialogFragment.NoticeDialogListener interface
+    @Override
+    public void onDialogPositiveClick(String namePlace) {
+        if(namePlace != null){
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(posicionNewMarker, DEFAULT_ZOOM));
+            MarkerOptions options = new MarkerOptions()
+                    .position(posicionNewMarker).icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_add_place))
+                    .title(namePlace);
+            mMap.addMarker(options);
+            lista_Markres.add(options);
+        }
+    }
+
+    @Override
+    public void onDialogNegativeClick(DialogFragment dialog) {
+
+    }
+
+
 }
