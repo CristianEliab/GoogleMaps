@@ -3,6 +3,8 @@ package cristian.proyecto.com.googlemaps;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.pm.PackageManager;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -14,7 +16,6 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.EditText;
@@ -39,14 +40,17 @@ import com.google.android.libraries.places.api.model.Place;
 import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
 import com.google.android.libraries.places.widget.listener.PlaceSelectionListener;
 
+import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.zip.Inflater;
+import java.util.List;
+import java.util.Locale;
 
 
 public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnMyLocationButtonClickListener,
-        GoogleMap.OnMyLocationClickListener, GoogleApiClient.OnConnectionFailedListener, GoogleMap.OnMapClickListener, NoticeDialogFragment.NoticeDialogListener{
+        GoogleMap.OnMyLocationClickListener, GoogleApiClient.OnConnectionFailedListener, GoogleMap.OnMapClickListener, NoticeDialogFragment.NoticeDialogListener,
+        GoogleMap.OnMarkerClickListener {
 
 
     private static final String FINE_LOCATION = Manifest.permission.ACCESS_FINE_LOCATION;
@@ -54,6 +58,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1234;
     private static final String TAG = "Mapas";
     private static final String API_KEY = "AIzaSyB3j7p5yXui2Ds8uHdvjK2dOwF_vGmT7t0";
+    private static final int DISTANCIA_MINIMA = 500;
     private GoogleMap mMap;
     private LocationManager manager;
     private MarkerOptions concurrentMarker;
@@ -66,41 +71,63 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private LatLng posicionNewMarker;
     private static final float DEFAULT_ZOOM = 15;
     public EditText nombreLugar;
+    public double distancia = 0.0;
+    public static String lugar;
+    public int contador = 0;
+    private boolean visible;
+    private TextView text_description;
 
 
+    /**
+     *
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
         Toolbar tb = findViewById(R.id.toolbar);
+        lista_Markres = new ArrayList<MarkerOptions>();
+        text_description = findViewById(R.id.text_place);
+
         setSupportActionBar(tb);
         tb.setSubtitle("Auto Complete");
         manager = (LocationManager) getSystemService(LOCATION_SERVICE);
-        lista_Markres = new ArrayList<MarkerOptions>();
+        visible = true;
         getLocationPermission();
         activarInfo();
         agregar_Marcador_Opcion2();
     }
 
+    /**
+     *
+     */
     private void agregar_Marcador_Opcion2() {
         agregar_Marcador = findViewById(R.id.add_marker);
         buscador = findViewById(R.id.relLayout1);
         agregar_Marcador.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                buscador.setVisibility(View.VISIBLE);
-
+                if (visible) {
+                    buscador.setVisibility(View.VISIBLE);
+                    visible = false;
+                } else {
+                    buscador.setVisibility(View.GONE);
+                    visible = true;
+                }
             }
         });
     }
 
+    /**
+     *
+     */
     private void activarInfo() {
         imagen_info = findViewById(R.id.place_info);
         imagen_info.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String lugar = lugarCercano();
                 DialogFragment dialog = new Dialogo();
+                String lugar = lugarCercano();
                 ((Dialogo) dialog).lugarCercano = lugar;
                 dialog.show(getSupportFragmentManager(), "MyCustomDialog");
             }
@@ -121,56 +148,53 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     /**
      *
      */
-    private void getLocationPermission(){
+    private void getLocationPermission() {
         String[] permissions = {Manifest.permission.ACCESS_FINE_LOCATION,
                 Manifest.permission.ACCESS_COARSE_LOCATION,
                 Manifest.permission.ACCESS_WIFI_STATE,
                 Manifest.permission.ACCESS_NETWORK_STATE};
 
-        if(ContextCompat.checkSelfPermission(this.getApplicationContext(),
-                FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
-            if(ContextCompat.checkSelfPermission(this.getApplicationContext(),
-                    COURSE_LOCATION) == PackageManager.PERMISSION_GRANTED){
+        if (ContextCompat.checkSelfPermission(this.getApplicationContext(),
+                FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            if (ContextCompat.checkSelfPermission(this.getApplicationContext(),
+                    COURSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
                 mLocationPermissionsGranted = true;
-                if(ContextCompat.checkSelfPermission(this.getApplicationContext(),
-                        Manifest.permission.ACCESS_WIFI_STATE) == PackageManager.PERMISSION_GRANTED){
-                    if(ContextCompat.checkSelfPermission(this.getApplicationContext(),
-                            Manifest.permission.ACCESS_NETWORK_STATE) == PackageManager.PERMISSION_GRANTED){
+                if (ContextCompat.checkSelfPermission(this.getApplicationContext(),
+                        Manifest.permission.ACCESS_WIFI_STATE) == PackageManager.PERMISSION_GRANTED) {
+                    if (ContextCompat.checkSelfPermission(this.getApplicationContext(),
+                            Manifest.permission.ACCESS_NETWORK_STATE) == PackageManager.PERMISSION_GRANTED) {
                         initMap();
-                    }else{
+                    } else {
                         ActivityCompat.requestPermissions(this,
                                 permissions,
                                 LOCATION_PERMISSION_REQUEST_CODE);
                     }
-                }else{
+                } else {
                     ActivityCompat.requestPermissions(this,
                             permissions,
                             LOCATION_PERMISSION_REQUEST_CODE);
                 }
-            }else{
+            } else {
                 ActivityCompat.requestPermissions(this,
                         permissions,
                         LOCATION_PERMISSION_REQUEST_CODE);
             }
-        }else{
+        } else {
             ActivityCompat.requestPermissions(this,
                     permissions,
                     LOCATION_PERMISSION_REQUEST_CODE);
         }
     }
 
-    private void metodo2(){
-        /**
-         * Initialize Places. For simplicity, the API key is hard-coded. In a production
-         * environment we recommend using a secure mechanism to manage API keys.
-         */
+    /**
+     *
+     */
+    private void metodo2() {
         if (!Places.isInitialized()) {
             Places.initialize(getApplicationContext(), API_KEY);
         }
-
         AutocompleteSupportFragment autocompleteFragment = (AutocompleteSupportFragment)
                 getSupportFragmentManager().findFragmentById(R.id.autocomplete_fragment);
-
         autocompleteFragment.setPlaceFields(Arrays.asList(Place.Field.ID, Place.Field.NAME));
         autocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
             @Override
@@ -187,11 +211,15 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         });
     }
 
-
+    /**
+     *
+     */
     private void agregarMarcador(Place place) {
         MarkerOptions newMarKer = new MarkerOptions();
         LatLng posicion = place.getLatLng();
-        newMarKer.position(posicion).title(place.getName());
+        newMarKer.position(posicion)
+                .infoWindowAnchor(100, 100)
+                .title(place.getName());
         mMap.addMarker(newMarKer);
         mMap.moveCamera(CameraUpdateFactory.newLatLng(posicion));
     }
@@ -214,20 +242,27 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         mMap.setMyLocationEnabled(true);
         mMap.setOnMyLocationButtonClickListener(this);
         mMap.setOnMyLocationClickListener(this);
+        mMap.setOnMarkerClickListener(this);
 
-        manager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 1000, 1, new LocationListener() {
+        manager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 5000, 1, new LocationListener() {
             @Override
             public void onLocationChanged(Location location) {
                 LatLng posicion = new LatLng(location.getLatitude(), location.getLongitude());
                 if (first == false) {
-                    concurrentMarker = new MarkerOptions().icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_person)).position(posicion).title("I");
+                    concurrentMarker = new MarkerOptions()
+                            .icon(BitmapDescriptorFactory
+                                    .fromResource(R.mipmap.ic_person))
+                            .position(posicion)
+                            .title("I");
                     mMap.addMarker(concurrentMarker);
                     mMap.moveCamera(CameraUpdateFactory.newLatLng(posicion));
                     first = true;
                 } else {
                     concurrentMarker.position(posicion);
+                    obtenerCercanos(DISTANCIA_MINIMA);
                     mMap.moveCamera(CameraUpdateFactory.newLatLng(posicion));
                 }
+
             }
 
             @Override
@@ -244,47 +279,56 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         });
     }
 
-    public double distancia = 0.0;
-    public static String lugar;
-    public int contador = 0;
-
-
+    /**
+     *
+     */
     public static double distFrom(double lat1, double lng1, double lat2, double lng2) {
         double earthRadius = 6371000; //meters
-        double dLat = Math.toRadians(lat2-lat1);
-        double dLng = Math.toRadians(lng2-lng1);
-        double a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLng = Math.toRadians(lng2 - lng1);
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
                 Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
-                        Math.sin(dLng/2) * Math.sin(dLng/2);
-        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+                        Math.sin(dLng / 2) * Math.sin(dLng / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         double dist = (double) (earthRadius * c);
 
         return dist;
     }
 
-    public void masCercano(double lat1, double lng1, double lat2, double lng2){
+    /**
+     *
+     */
+    public void masCercano(double lat1, double lng1, double lat2, double lng2) {
         double distance = distFrom(lat1, lng1, lat2, lng2);
-        if(this.contador == 0){
+        if (this.contador == 0) {
             this.distancia = distance;
             this.contador++;
-        }else{
-            if(distance <= this.distancia){
+        } else {
+            if (distance <= this.distancia) {
                 this.distancia = distance;
             }
         }
     }
 
-    private String lugarCercano(){
+    /**
+     *
+     */
+    private String lugarCercano() {
         DecimalFormat format = new DecimalFormat();
-        for (MarkerOptions marker: lista_Markres) {
+        for (MarkerOptions marker : lista_Markres) {
             lugar = marker.getTitle();
             LatLng posicion = marker.getPosition();
             LatLng concurret = concurrentMarker.getPosition();
             format.setMaximumFractionDigits(2);
-            masCercano(posicion.latitude, posicion.longitude,  concurret.latitude, concurret.longitude);
+            masCercano(posicion.latitude, posicion.longitude, concurret.latitude, concurret.longitude);
         }
-        String conversion = format.format(this.distancia);
-        return "El lugar más cercano es \n" + lugar + " a una ditancia de: \n" + conversion;
+        if (lugar != null) {
+            String conversion = format.format(this.distancia);
+            return "The nearest place is \n" + lugar + " at a distance of: \n" + conversion + "meters";
+        } else {
+            String conversion = format.format(this.distancia);
+            return "Has no marker on the map";
+        }
     }
 
     /**
@@ -292,7 +336,18 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
      */
     @Override
     public void onMyLocationClick(Location location) {
-        Toast.makeText(this, "Usted se encuentra en :\n", Toast.LENGTH_LONG).show();
+        Geocoder geocoder = new Geocoder(this, Locale.getDefault());
+        String direccion = "";
+        List<Address> addresses = null;
+        try {
+            addresses = geocoder.getFromLocation(location.getLatitude(), location.getLongitude(), 1);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Address address = addresses.get(0);
+        for (int i = 0; i <= address.getMaxAddressLineIndex(); i++) {
+            direccion += address.getAddressLine(i) + "\n";
+        }
     }
 
 
@@ -301,7 +356,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
      */
     @Override
     public boolean onMyLocationButtonClick() {
-        Toast.makeText(this, "MyLocation button clicked", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "MyLocation clicked", Toast.LENGTH_SHORT).show();
         return false;
     }
 
@@ -317,7 +372,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     /**
      *
      */
-    private void hideSoftKeyboard(){
+    private void hideSoftKeyboard() {
         this.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
     }
 
@@ -325,9 +380,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     /**
      *
      */
-    private void moveCamera(LatLng latLng, float zoom, String title){
+    private void moveCamera(LatLng latLng, float zoom, String title) {
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
-        if(!title.equals("My Location")){
+        if (!title.equals("I")) {
             MarkerOptions options = new MarkerOptions()
                     .position(latLng)
                     .title(title);
@@ -361,7 +416,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     // defined by the NoticeDialogFragment.NoticeDialogListener interface
     @Override
     public void onDialogPositiveClick(String namePlace) {
-        if(namePlace != null){
+        if (namePlace != null) {
             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(posicionNewMarker, DEFAULT_ZOOM));
             MarkerOptions options = new MarkerOptions()
                     .position(posicionNewMarker).icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_add_place))
@@ -374,6 +429,60 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public void onDialogNegativeClick(DialogFragment dialog) {
 
+    }
+
+    private String obtenerDireccion() {
+        Geocoder geocoder = new Geocoder(this, Locale.getDefault());
+        String direccion = "";
+        List<Address> addresses = null;
+        try {
+            // My position
+            LatLng posicion = concurrentMarker.getPosition();
+            addresses = geocoder.getFromLocation(posicion.latitude, posicion.longitude, 1);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Address address = addresses.get(0);
+        for (int i = 0; i <= address.getMaxAddressLineIndex(); i++) {
+            direccion += address.getAddressLine(i) + "\n";
+        }
+        return direccion;
+    }
+
+
+    @Override
+    public boolean onMarkerClick(Marker marker) {
+        if (!marker.getTitle().equals("I")) {
+            text_description.setText("");
+            text_description.setText("You are in \n" + marker.getTitle() + " with" + obtenerDireccion());
+        } else {
+            text_description.setText("");
+            text_description.setText(marker.getTitle() + " am in " + obtenerDireccion());
+        }
+        return false;
+    }
+
+    private void obtenerCercanos(int distanciaMinima) {
+        DecimalFormat format = new DecimalFormat();
+        for (MarkerOptions marker : lista_Markres) {
+            LatLng posicion = marker.getPosition();
+            LatLng concurret = concurrentMarker.getPosition();
+            format.setMaximumFractionDigits(2);
+            masCercano(posicion.latitude, posicion.longitude, concurret.latitude, concurret.longitude);
+            if (distancia <= distanciaMinima) {
+                String nombre = marker.getTitle();
+                if (!nombre.equals("I")) {
+                    text_description.setText("");
+                    text_description.setText("You are in \n" + nombre);
+                } else {
+                    text_description.setText("");
+                    text_description.setText(nombre +"\n" + obtenerDireccion());
+                }
+            } else {
+                text_description.setText("");
+                text_description.setText("This place is more than \n 500 meters away.");
+            }
+        }
     }
 
 
