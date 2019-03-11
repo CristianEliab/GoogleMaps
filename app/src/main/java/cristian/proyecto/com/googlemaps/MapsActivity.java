@@ -3,6 +3,7 @@ package cristian.proyecto.com.googlemaps;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
@@ -32,6 +33,8 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.Circle;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -58,7 +61,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1234;
     private static final String TAG = "Mapas";
     private static final String API_KEY = "AIzaSyB3j7p5yXui2Ds8uHdvjK2dOwF_vGmT7t0";
-    private static final int DISTANCIA_MINIMA = 500;
+    private static final int DISTANCIA_MINIMA_1 = 500;
+    private static final int DISTANCIA_MINIMA_2 = 100;
     private GoogleMap mMap;
     private LocationManager manager;
     private MarkerOptions concurrentMarker;
@@ -86,7 +90,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
         Toolbar tb = findViewById(R.id.toolbar);
+
+        // Lista de marcadores en el mapa.
         lista_Markres = new ArrayList<MarkerOptions>();
+        // Panel inferior con la información del lugar
         text_description = findViewById(R.id.text_place);
 
         setSupportActionBar(tb);
@@ -99,54 +106,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     /**
-     *
-     */
-    private void agregar_Marcador_Opcion2() {
-        agregar_Marcador = findViewById(R.id.add_marker);
-        buscador = findViewById(R.id.relLayout1);
-        agregar_Marcador.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (visible) {
-                    buscador.setVisibility(View.VISIBLE);
-                    visible = false;
-                } else {
-                    buscador.setVisibility(View.GONE);
-                    visible = true;
-                }
-            }
-        });
-    }
-
-    /**
-     *
-     */
-    private void activarInfo() {
-        imagen_info = findViewById(R.id.place_info);
-        imagen_info.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                DialogFragment dialog = new Dialogo();
-                String lugar = lugarCercano();
-                ((Dialogo) dialog).lugarCercano = lugar;
-                dialog.show(getSupportFragmentManager(), "MyCustomDialog");
-            }
-        });
-    }
-
-    /**
-     *
-     */
-    private void initMap() {
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.map);
-        mapFragment.getMapAsync(this);
-        metodo2();
-    }
-
-
-    /**
-     *
+     * Método que comprueba los permisos del usuario para la localización, internet,
+     * entre otros.
      */
     private void getLocationPermission() {
         String[] permissions = {Manifest.permission.ACCESS_FINE_LOCATION,
@@ -186,8 +147,20 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
+
     /**
-     *
+     * Inicializa el mapa a pertir de los permisos otorgados.
+     */
+    private void initMap() {
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.map);
+        mapFragment.getMapAsync(this);
+        metodo2();
+    }
+
+    /**
+     * Inicializa los componentes de filtrado de los lugares
+     * existentes en el mapa de Google places.
      */
     private void metodo2() {
         if (!Places.isInitialized()) {
@@ -199,7 +172,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         autocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
             @Override
             public void onPlaceSelected(Place place) {
-                Log.i(TAG, "Place: " + place.getName() + ", " + place.getId());
                 agregarMarcador(place);
             }
 
@@ -212,7 +184,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     /**
-     *
+     * Agrega el marcador en el lugar que se selecciono en el buscador.
      */
     private void agregarMarcador(Place place) {
         MarkerOptions newMarKer = new MarkerOptions();
@@ -220,8 +192,50 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         newMarKer.position(posicion)
                 .infoWindowAnchor(100, 100)
                 .title(place.getName());
+        lista_Markres.add(newMarKer);
         mMap.addMarker(newMarKer);
         mMap.moveCamera(CameraUpdateFactory.newLatLng(posicion));
+    }
+
+
+
+    /**
+     * Permite agregar un marcador a partir de un buscador.
+     * Este metodo permitiriá implementar el API de Google
+     * Places. Sin embargo, no se pudo realizar.
+     * Este método habilita la vista de está opción.
+     */
+    private void agregar_Marcador_Opcion2() {
+        agregar_Marcador = findViewById(R.id.add_marker);
+        buscador = findViewById(R.id.relLayout1);
+        agregar_Marcador.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (visible) {
+                    buscador.setVisibility(View.VISIBLE);
+                    visible = false;
+                } else {
+                    buscador.setVisibility(View.GONE);
+                    visible = true;
+                }
+            }
+        });
+    }
+
+    /**
+     * Información del lugar más cercano al marcador personal en el mapa
+     */
+    private void activarInfo() {
+        imagen_info = findViewById(R.id.place_info);
+        imagen_info.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                DialogFragment dialog = new Dialogo();
+                String lugar = lugarCercano();
+                ((Dialogo) dialog).lugarCercano = lugar;
+                dialog.show(getSupportFragmentManager(), "MyCustomDialog");
+            }
+        });
     }
 
     /**
@@ -259,7 +273,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     first = true;
                 } else {
                     concurrentMarker.position(posicion);
-                    obtenerCercanos(DISTANCIA_MINIMA);
+                    obtenerCercanos(DISTANCIA_MINIMA_2);
                     mMap.moveCamera(CameraUpdateFactory.newLatLng(posicion));
                 }
 
@@ -280,7 +294,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     /**
-     *
+     * Permite obtener la distancia a la que se encuentra un marcador en el mapa.
      */
     public static double distFrom(double lat1, double lng1, double lat2, double lng2) {
         double earthRadius = 6371000; //meters
@@ -296,7 +310,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     /**
-     *
+     * Método que filtra la distancia obtenida en el metodo distfrom().
      */
     public void masCercano(double lat1, double lng1, double lat2, double lng2) {
         double distance = distFrom(lat1, lng1, lat2, lng2);
@@ -311,7 +325,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     /**
-     *
+     * Permite modificar el mensaje del dialogo de información.
+     * Si no existe marcadores este revelerá el correspondiente mensaje.
+     * Muestra la información del lugar más cercano.
      */
     private String lugarCercano() {
         DecimalFormat format = new DecimalFormat();
@@ -332,7 +348,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     /**
-     *
+     * Método que permite obtener la dirección de la
+     * localización ingresada.
      */
     @Override
     public void onMyLocationClick(Location location) {
@@ -352,7 +369,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 
     /**
-     *
+     * Posiciona el marcador personal en el mapa.
      */
     @Override
     public boolean onMyLocationButtonClick() {
@@ -378,7 +395,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 
     /**
-     *
+     * Mueve la camara el lugar específicado.
      */
     private void moveCamera(LatLng latLng, float zoom, String title) {
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
@@ -399,12 +416,20 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     }
 
+
+    /**
+     * Permite ubicar la latitud y longitud del punto clickiado en el mapa.
+     */
     @Override
     public void onMapClick(LatLng latLng) {
         showNoticeDialog();
         posicionNewMarker = latLng;
     }
 
+
+    /**
+     *
+     */
     public void showNoticeDialog() {
         // Create an instance of the dialog fragment and show it
         DialogFragment dialog = new NoticeDialogFragment();
@@ -431,6 +456,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     }
 
+    /**
+     * Permite modificar el mensaje del dialogo de información.
+     * Si no existe marcadores este revelerá el correspondiente mensaje.
+     * Muestra la información del lugar más cercano.
+     */
     private String obtenerDireccion() {
         Geocoder geocoder = new Geocoder(this, Locale.getDefault());
         String direccion = "";
@@ -450,11 +480,16 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
 
+    /**
+     * Permite conocer cual marcador es clickeado.
+     * @param marker
+     * @return
+     */
     @Override
     public boolean onMarkerClick(Marker marker) {
         if (!marker.getTitle().equals("I")) {
             text_description.setText("");
-            text_description.setText("You are in \n" + marker.getTitle() + " with" + obtenerDireccion());
+            text_description.setText(marker.getTitle() + "\n" + "with" + "\n" + obtenerDireccion());
         } else {
             text_description.setText("");
             text_description.setText(marker.getTitle() + " am in " + obtenerDireccion());
@@ -462,6 +497,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         return false;
     }
 
+
+    /**
+     *
+     * @param distanciaMinima
+     */
     private void obtenerCercanos(int distanciaMinima) {
         DecimalFormat format = new DecimalFormat();
         for (MarkerOptions marker : lista_Markres) {
@@ -472,11 +512,20 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             if (distancia <= distanciaMinima) {
                 String nombre = marker.getTitle();
                 if (!nombre.equals("I")) {
+                    Circle circle = mMap.addCircle(new CircleOptions()
+                            .center(new LatLng(posicion.latitude, posicion.longitude))
+                            .radius(DISTANCIA_MINIMA_2)
+                            .strokeColor(Color.RED));
                     text_description.setText("");
                     text_description.setText("You are in \n" + nombre);
                 } else {
                     text_description.setText("");
-                    text_description.setText(nombre +"\n" + obtenerDireccion());
+                    text_description.setText(nombre + "\n" + obtenerDireccion());
+                }
+            } else if (distancia <= DISTANCIA_MINIMA_1) {
+                if (!marker.getTitle().equals("I")) {
+                    text_description.setText("");
+                    text_description.setText("You are nearest of the place"  + "\n" +  marker.getTitle());
                 }
             } else {
                 text_description.setText("");
