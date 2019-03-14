@@ -63,6 +63,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private static final String API_KEY = "AIzaSyB3j7p5yXui2Ds8uHdvjK2dOwF_vGmT7t0";
     private static final int DISTANCIA_MINIMA_1 = 500;
     private static final int DISTANCIA_MINIMA_2 = 100;
+    private static final int LIMITE = 999999;
     private GoogleMap mMap;
     private LocationManager manager;
     private MarkerOptions concurrentMarker;
@@ -258,7 +259,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         mMap.setOnMyLocationClickListener(this);
         mMap.setOnMarkerClickListener(this);
 
-        manager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 5000, 1, new LocationListener() {
+        manager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 1000, 1, new LocationListener() {
             @Override
             public void onLocationChanged(Location location) {
                 LatLng posicion = new LatLng(location.getLatitude(), location.getLongitude());
@@ -312,7 +313,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     /**
      * Método que filtra la distancia obtenida en el metodo distfrom().
      */
-    public void masCercano(double lat1, double lng1, double lat2, double lng2) {
+    public double masCercano(double lat1, double lng1, double lat2, double lng2) {
         double distance = distFrom(lat1, lng1, lat2, lng2);
         if (this.contador == 0) {
             this.distancia = distance;
@@ -322,6 +323,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 this.distancia = distance;
             }
         }
+        double distancia_temp = this.distancia;
+        this.distancia = LIMITE;
+        return distancia_temp;
     }
 
     /**
@@ -331,18 +335,18 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
      */
     private String lugarCercano() {
         DecimalFormat format = new DecimalFormat();
+        double distancia_temp = 0.0;
         for (MarkerOptions marker : lista_Markres) {
             lugar = marker.getTitle();
             LatLng posicion = marker.getPosition();
             LatLng concurret = concurrentMarker.getPosition();
             format.setMaximumFractionDigits(2);
-            masCercano(posicion.latitude, posicion.longitude, concurret.latitude, concurret.longitude);
+            distancia_temp = masCercano(posicion.latitude, posicion.longitude, concurret.latitude, concurret.longitude);
         }
         if (lugar != null) {
-            String conversion = format.format(this.distancia);
+            String conversion = format.format(distancia_temp);
             return "The nearest place is \n" + lugar + " at a distance of: \n" + conversion + "meters";
         } else {
-            String conversion = format.format(this.distancia);
             return "Has no marker on the map";
         }
     }
@@ -508,12 +512,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             LatLng posicion = marker.getPosition();
             LatLng concurret = concurrentMarker.getPosition();
             format.setMaximumFractionDigits(2);
-            masCercano(posicion.latitude, posicion.longitude, concurret.latitude, concurret.longitude);
-            if (distancia <= distanciaMinima) {
+            double distancia_temp = masCercano(posicion.latitude, posicion.longitude, concurret.latitude, concurret.longitude);
+            if (distancia_temp <= distanciaMinima) {
                 String nombre = marker.getTitle();
                 if (!nombre.equals("I")) {
                     Circle circle = mMap.addCircle(new CircleOptions()
-                            .center(new LatLng(posicion.latitude, posicion.longitude))
+                            .center(new LatLng(concurret.latitude, concurret.longitude))
                             .radius(DISTANCIA_MINIMA_2)
                             .strokeColor(Color.RED));
                     text_description.setText("");
@@ -522,7 +526,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     text_description.setText("");
                     text_description.setText(nombre + "\n" + obtenerDireccion());
                 }
-            } else if (distancia <= DISTANCIA_MINIMA_1) {
+            } else if (distancia_temp <= DISTANCIA_MINIMA_1) {
                 if (!marker.getTitle().equals("I")) {
                     text_description.setText("");
                     text_description.setText("You are nearest of the place"  + "\n" +  marker.getTitle());
